@@ -1,0 +1,53 @@
+data = read.csv("WA_Fn-UseC_-Telco-Customer-Churn.csv", header = TRUE)
+View(data)
+data$customerID <- NULL
+plot(data.frame(data$TotalCharges,data$tenure))
+x<-c(summary(data$Churn))
+piepercent<- round(100*x/sum(x), 1)
+pie(x, piepercent, radius=1, main="Ушедшие клиенты", col=c("#3F51B5", "#FF9800"), clockwise=TRUE)
+legend("topright", c("Yes","No"), cex = 0.8,fill =c("#3F51B5", "#FF9800"))
+rm(x)
+rm(piepercent)
+par(mfrow = c(1, 2)) 
+barplot(table(data$tenure[data$Churn=="Yes"]), col=c("#3F51B5"), main="Yes" )
+barplot(table(data$tenure[data$Churn=="No"]), col=c("#FF9800"), main="No" )
+par(mfrow=c(1,1))
+boxplot(data$MonthlyCharges ~ data$Churn,
+         xlab = "Отток",
+         ylab = "Ежемесячные платежи",
+         col = "coral", data = data)
+#install.packages("corrplot")
+library(corrplot)
+factor_names <- names(data[,unlist(lapply(data, is.factor))])
+chi_results <- matrix(NA,nrow = length(factor_names ),ncol=length(factor_names ))
+colnames(chi_results) <- c(factor_names )
+rownames(chi_results) <- c(factor_names )
+for (col_name in factor_names){
+         for (col_name2 in factor_names){
+ 	          chi_results[col_name,col_name2] <- chisq.test(table(data[,col_name],data[,col_name2]))$p.value
+         }  
+ }
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(chi_results, method="color", col=col(200),  
+           type="upper", order="hclust", 
+           addCoef.col = "black", tl.col="black", tl.srt=45,
+           sig.level = 0.01, insig = "blank",
+           diag=FALSE  )
+cdata <- data 
+indx <- sapply(cdata , is.factor)
+cdata [indx] <- lapply(cdata [indx], function(x) as.numeric(x))
+#install.packages('dplyr')
+library(dplyr)
+
+M<-cor(cdata %>% select(tenure,MonthlyCharges, Churn))
+View(round(M,2))
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(M, method="color", col=col(200),  
+            type="upper", order="hclust", 
+            addCoef.col = "black", tl.col="black", tl.srt=45,
+            sig.level = 0.01, insig = "blank",
+            diag=FALSE 
+ )
+
+
